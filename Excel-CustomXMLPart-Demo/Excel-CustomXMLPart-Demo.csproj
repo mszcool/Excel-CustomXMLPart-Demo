@@ -49,6 +49,8 @@
       <OpcRelationship>manifest-oemanifest</OpcRelationship>
     </Content>
     <None Include="TestBook.xlsx" />
+    <None Include="TestBook_mszcool.xlsx" />
+    <None Include="TestBook_mszcool_orig.xlsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Excel-CustomXMLPart-DemoWeb\Excel-CustomXMLPart-DemoWeb.csproj">

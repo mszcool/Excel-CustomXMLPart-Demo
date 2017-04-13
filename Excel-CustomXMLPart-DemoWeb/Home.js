@@ -1,4 +1,4 @@
-﻿/// <reference path="/Scripts/FabricUI/MessageBanner.js" />
+﻿/// <reference path="./Scripts/FabricUI/MessageBanner.js" />
 
 (function () {
     "use strict";
@@ -15,7 +15,7 @@
         this.Width = 12;
         this.Left = 0;
         this.ControlType = "";
-    };
+    }
 
     // The initialize function must be run each time a new page is loaded.
     Office.initialize = function (reason) {
@@ -51,9 +51,18 @@
             $('#add-binding-button-desc').text("Add new binding to the workbook");
             $('#add-binding-button').click(addControl);
 
+            $('#save-table-button-text').text("Save table to XML");
+            $('#save-table-button-desc').text("Saves the current content of the table to an XML in the document");
+            $('#save-table-button').click(function () {
+                tableXmlBinder.
+            });
+
             initializeWB();
+
+            // ---tableXml---
+            tableXmlBinder.startBinding();
         });
-    }
+    };
 
     function initializeWB() {
 
@@ -134,13 +143,13 @@
                                     controlData.ControlType = this.textContent;
                                     break;
                             }
-                        })
+                        });
                         myControls.push(controlData);
-                    })
+                    });
 
                     showNotification('Info', 'Completed.  Controls Found: ' + myControls.length);
 
-                })
+                });
 
             });
         }).catch(function (error) { //...
@@ -172,7 +181,7 @@
 
                 for (var i = 0; i < bindings.items.length; i++) {
 
-                    if (bindings.items[i].id != "SheetBinding") {
+                    if (bindings.items[i].id !== "SheetBinding") {
                         var bindingid = bindings.items[i].id;
                         Office.select('bindings#' + bindingid).addHandlerAsync(Office.EventType.BindingSelectionChanged, onBindingSelectionChanged);
                     }
@@ -219,7 +228,7 @@
 
                 for (var i = 0; i < bindings.items.length; i++) {
 
-                    if (bindings.items[i].id != "SheetBinding") {
+                    if (bindings.items[i].id !== "SheetBinding") {
                         var controlData = new controlDataObj();
                         var binding = bindings.items[i];
 
@@ -291,7 +300,7 @@
 
                 for (var i = 0; i < bindings.items.length; i++) {
 
-                    if (bindings.items[i].id != "SheetBinding") {
+                    if (bindings.items[i].id !== "SheetBinding") {
 
                         var range = bindings.items[i].getRange();
                         range.load(["format/*", "format/fill", "format/borders"]);
@@ -303,7 +312,7 @@
                     for (var i = 0; i < ranges.length; i++) {
 
                         ranges[i].format.fill.clear();
-                        
+
                         ranges[i].format.borders.getItem('EdgeBottom').style = 'None';
                         ranges[i].format.borders.getItem('EdgeLeft').style = 'None';
                         ranges[i].format.borders.getItem('EdgeRight').style = 'None';
@@ -313,7 +322,7 @@
 
                     return ctx.sync();
                 });
-            })
+            });
         }).catch(function (error) { //...
         });
     }
@@ -328,7 +337,7 @@
             return ctx.sync().then(function () {
 
                 for (var i = 0; i < bindings.items.length; i++) {
-                    if (bindings.items[i].id != "SheetBinding") {
+                    if (bindings.items[i].id !== "SheetBinding") {
                         bindings.items[i].delete();
                     }
                 }
