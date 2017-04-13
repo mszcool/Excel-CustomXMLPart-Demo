@@ -54,7 +54,7 @@
             $('#save-table-button-text').text("Save table to XML");
             $('#save-table-button-desc').text("Saves the current content of the table to an XML in the document");
             $('#save-table-button').click(function () {
-                tableXmlBinder.
+                tableXmlBinder.saveContent();
             });
 
             initializeWB();
