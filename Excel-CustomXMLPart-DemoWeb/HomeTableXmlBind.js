@@ -3,10 +3,10 @@
 var tableXmlBinder = (function () {
     'use strict';
 
-    var tableName = "Sheet2!PersonsTable";
+    var tableName = "PersonsTable";
+    var tableNameFull = "Sheet2!PersonsTable";
     var bindingName = "PersonsBinding";
     var binding = null;
-    var xmlPart = null;
     var xmlPartDoc = null;
 
     //
@@ -58,7 +58,7 @@ var tableXmlBinder = (function () {
 
             // Start binding to the the table
             Office.context.document.bindings.addFromNamedItemAsync(
-                tableName,
+                tableNameFull,
                 Office.BindingType.Table,
                 { id: bindingName },
                 function (results) {
@@ -72,7 +72,7 @@ var tableXmlBinder = (function () {
             console.error(error);
         });
 
-    };
+    }
 
     function addTableBindingHandler(callback) {
         Office.select("bindings#" + bindingName).addHandlerAsync(
@@ -82,7 +82,7 @@ var tableXmlBinder = (function () {
                 if (callback) { callback(); }
             }
         );
-    };
+    }
 
     // Called when data in the table changes
     var onBindingDataChanged = function (result) {
@@ -95,16 +95,116 @@ var tableXmlBinder = (function () {
     // 
     function saveTableContentToXml() {
 
-        // Get the Excel Table and walk through the lines
         Excel.run(function (context) {
 
-            var bindings = context.workbook.bindings(tableName);
+            var theTable = context.workbook.tables.getItem(tableName);
+            var headerRange = theTable.getHeaderRowRange();
+            headerRange.load();
 
+            var parts = context.workbook.customXmlParts;
+            parts.load();
+
+            var xmlPart = parts.getByNamespace("SapPrototypeTest").getOnlyItem();
+            xmlPart.delete();
+
+            return context.sync().then(function () {
+
+                binding.getDataAsync(
+                    {
+                        startRow: 0,
+                        startColumn: 0
+                    },
+                    function (asyncResult) {
+                        var valuesInTable = asyncResult.value;
+                        saveRowsInXml(headerRange, valuesInTable, xmlPartDoc);
+
+                        var xmlString = (new XMLSerializer()).serializeToString(xmlPartDoc);
+
+                        xmlPart = parts.add(xmlString);
+                        xmlPart.load();
+
+                        return context.sync().then(function () {
+                            var xmlData = xmlPart.getXml();
+                            return context.sync().then(function () {
+                                xmlPartDoc = $.parseXML(xmlData.value);
+                            });
+                        });
+                    }
+                );
+
+            });
         }).catch(function (error) {
-            console.error(">>>>>>>>>>>>>>>>>> ERROR Saving XML >>>>>>>>>>>>>>>>");
+            console.error(">>>>>>>>>>>>>> Error when saving XML >>>>>>>>>>>>>>>>");
             console.error(error);
         });
 
+    }
+
+    //
+    // Saves each row in the bound table to the XML data
+    //
+    function saveRowsInXml(tableHeader, valuesInTable, xmlPartDoc) {
+
+        // First, get the PersonsData Element from the XML
+        var personsNode = xmlPartDoc.getElementsByTagName('PersonsData')[0];
+
+        // Walk through each row in the table bound
+        for (var i = 0; i < valuesInTable.rows.length; i++) {
+
+            // Now try to find the existing row in the PersonsData XML
+            var isNewPerson = false;
+            var personElement = getElementByIdXml(xmlPartDoc, valuesInTable.rows[i][0].toString());
+            if (!personElement) {
+                // Person does not exist, create a new element
+                isNewPerson = true;
+                personElement = xmlPartDoc.createElement("Person");
+                personElement.setAttribute("ID", valuesInTable.rows[i][0]);
+            }
+
+            // Now set the values for each column in the Excel Table
+            for (var col = 0; col < tableHeader.values[0].length; col++) {
+                var personColumnElement = null;
+                if (isNewPerson) {
+                    personColumnElement = xmlPartDoc.createElement(tableHeader.values[0][col].toLowerCase());
+                    personColumnElement.appendChild(xmlPartDoc.createTextNode(valuesInTable.rows[i][col]));
+                    personElement.appendChild(personColumnElement);
+                } else {
+                    personColumnElement = personElement.getElementsByTagName(tableHeader.values[0][col].toLowerCase())[0];
+                    personColumnElement.childNodes[0].nodeValue = valuesInTable.rows[i][col];
+                }
+            }
+
+            // Finally append the new person if it is indeed a new one
+            if (isNewPerson) {
+                personsNode.appendChild(personElement);
+            }
+        }
+
+    }
+
+    // 
+    // Helper to make getElementById() work with XML without a DTD
+    //
+    function getElementByIdXml(the_node, the_id) {
+        //get all the tags in the doc
+        var node_tags = the_node.getElementsByTagName('Person');
+        for (var i = 0; i < node_tags.length; i++) {
+            //is there an id attribute?
+            if (node_tags[i].hasAttribute('id')) {
+                //if there is, test its value
+                if (node_tags[i].getAttribute('id') === the_id) {
+                    //and return it if it matches
+                    return node_tags[i];
+                }
+            } else if (node_tags[i].hasAttribute('ID')) {
+                if (node_tags[i].getAttribute('ID') === the_id) {
+                    //and return it if it matches
+                    return node_tags[i];
+                }
+            }
+        }
+        // Nothing found
+        return null;
     }
 
 
