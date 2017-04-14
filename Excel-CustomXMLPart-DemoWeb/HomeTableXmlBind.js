@@ -163,14 +163,20 @@ var tableXmlBinder = (function () {
 
             // Now set the values for each column in the Excel Table
             for (var col = 0; col < tableHeader.values[0].length; col++) {
-                var personColumnElement = null;
                 if (isNewPerson) {
-                    personColumnElement = xmlPartDoc.createElement(tableHeader.values[0][col].toLowerCase());
+                    var personColumnElement = xmlPartDoc.createElement(tableHeader.values[0][col].toLowerCase());
                     personColumnElement.appendChild(xmlPartDoc.createTextNode(valuesInTable.rows[i][col]));
                     personElement.appendChild(personColumnElement);
                 } else {
-                    personColumnElement = personElement.getElementsByTagName(tableHeader.values[0][col].toLowerCase())[0];
-                    personColumnElement.childNodes[0].nodeValue = valuesInTable.rows[i][col];
+                    var personColumnElements = personElement.getElementsByTagName(tableHeader.values[0][col].toLowerCase());
+                    if (personColumnElements.length > 0) {
+                        personColumnElements[0].childNodes[0].nodeValue = valuesInTable.rows[i][col];
+                    } else {
+                        // Column was added while last save... so add a new column
+                        var newPersonColumnElement = xmlPartDoc.createElement(tableHeader.values[0][col].toLowerCase());
+                        newPersonColumnElement.appendChild(xmlPartDoc.createTextNode(valuesInTable.rows[i][col]));
+                        personElement.appendChild(newPersonColumnElement);
+                    }
                 }
             }
 
